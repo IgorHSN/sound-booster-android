@@ -128,9 +128,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateBoostLabels(percent: Int) {
         binding.tvBoostPercent.text = "$percent%"
-        // 200% slider = 1000 mB = 10 dB; linear mapping
-        val db = percent * 10.0f / 200f
-        binding.tvBoostDb.text = String.format("+%.1f dB", db)
+        // 100% slider = 8000 mB = 80 dB
+        val db = percent * 80.0f / 100f
+        binding.tvBoostDb.text = String.format("+%.0f dB", db)
     }
 
     private fun refreshVolumeDisplay() {
