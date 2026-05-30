@@ -2,28 +2,19 @@ package com.soundbooster.app
 
 import android.content.Context
 import android.media.AudioManager
-import android.media.audiofx.BassBoost
-import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
 import android.util.Log
-import java.util.Timer
-import java.util.TimerTask
 
 class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        // Reapply effects every 2s — the OS can silently reset them on some devices
-        private const val REAPPLY_INTERVAL_MS = 2000L
+        // Go well beyond the documented 1000 mB limit — Qualcomm HAL accepts up to ~3000 mB
+        private const val MAX_GAIN_MB = 3000
     }
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-    private var equalizer: Equalizer? = null
-    private var loudness: LoudnessEnhancer? = null
-    private var bass: BassBoost? = null
-
-    private var reapplyTimer: Timer? = null
+    private var loudnessEnhancer: LoudnessEnhancer? = null
 
     var isEnabled = false
         private set
@@ -34,27 +25,29 @@ class AudioBoosterManager(private val context: Context) {
     // -------------------------------------------------------------------------
 
     fun init() {
-        createEffects()
+        createEnhancer()
     }
 
     fun enable() {
         isEnabled = true
         setSystemVolumeMax()
-        applyEffects()
-        startReapplyTimer()
-        Log.d(TAG, "Boost enabled at $boostPercent%")
+        applyGain()
+        Log.d(TAG, "Boost enabled at $boostPercent% (${calcGainMb(boostPercent)} mB)")
     }
 
     fun disable() {
         isEnabled = false
-        stopReapplyTimer()
-        disableEffects()
+        try {
+            loudnessEnhancer?.enabled = false
+        } catch (e: Exception) {
+            Log.w(TAG, "disable: ${e.message}")
+        }
         Log.d(TAG, "Boost disabled")
     }
 
     fun setBoostLevel(percent: Int) {
         boostPercent = percent.coerceIn(0, 200)
-        if (isEnabled) applyEffects()
+        if (isEnabled) applyGain()
     }
 
     fun getBoostPercent() = boostPercent
@@ -70,132 +63,64 @@ class AudioBoosterManager(private val context: Context) {
 
     fun release() {
         disable()
-        releaseEffects()
+        try {
+            loudnessEnhancer?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "release: ${e.message}")
+        }
+        loudnessEnhancer = null
     }
 
     // -------------------------------------------------------------------------
-    // Effects
+    // Internal
     // -------------------------------------------------------------------------
 
-    private fun createEffects() {
-        releaseEffects()
-        // Priority 0, session 0 = global audio mix
+    private fun createEnhancer() {
         try {
-            equalizer = Equalizer(0, 0)
-            Log.d(TAG, "Equalizer OK — bands=${equalizer?.numberOfBands}, range=${equalizer?.bandLevelRange?.toList()}")
-        } catch (e: Exception) {
-            Log.w(TAG, "Equalizer unavailable: ${e.message}")
-        }
+            loudnessEnhancer?.release()
+        } catch (_: Exception) {}
+        loudnessEnhancer = null
+
         try {
-            loudness = LoudnessEnhancer(0)
-            Log.d(TAG, "LoudnessEnhancer OK")
+            loudnessEnhancer = LoudnessEnhancer(0)
+            Log.d(TAG, "LoudnessEnhancer created on session 0")
         } catch (e: Exception) {
-            Log.w(TAG, "LoudnessEnhancer unavailable: ${e.message}")
-        }
-        try {
-            bass = BassBoost(0, 0)
-            Log.d(TAG, "BassBoost OK — strengthSupported=${bass?.strengthSupported}")
-        } catch (e: Exception) {
-            Log.w(TAG, "BassBoost unavailable: ${e.message}")
+            Log.e(TAG, "Failed to create LoudnessEnhancer: ${e.message}")
         }
     }
 
-    private fun applyEffects() {
-        applyEqualizer()
-        applyLoudness()
-        applyBass()
-    }
+    private fun applyGain() {
+        val le = loudnessEnhancer ?: run {
+            createEnhancer()
+            loudnessEnhancer
+        } ?: return
 
-    private fun applyEqualizer() {
-        val eq = equalizer ?: return
         try {
-            if (boostPercent == 0) { eq.enabled = false; return }
-            val maxLevel = eq.bandLevelRange[1] // typically 1500 centibels = 15 dB
-            val level = (maxLevel * boostPercent / 200).toShort()
-            for (i in 0 until eq.numberOfBands) {
-                eq.setBandLevel(i.toShort(), level)
+            val gainMb = calcGainMb(boostPercent)
+            le.setTargetGain(gainMb)
+            le.enabled = boostPercent > 0
+            Log.d(TAG, "Gain applied: $gainMb mB (${boostPercent}%)")
+        } catch (e: Exception) {
+            Log.w(TAG, "applyGain failed, recreating: ${e.message}")
+            createEnhancer()
+            try {
+                loudnessEnhancer?.setTargetGain(calcGainMb(boostPercent))
+                loudnessEnhancer?.enabled = boostPercent > 0
+            } catch (e2: Exception) {
+                Log.e(TAG, "applyGain retry failed: ${e2.message}")
             }
-            eq.enabled = true
-            Log.d(TAG, "EQ applied: ${level} cB on ${eq.numberOfBands} bands")
-        } catch (e: Exception) {
-            Log.w(TAG, "EQ apply failed: ${e.message}")
-            recreateAndApply()
         }
     }
 
-    private fun applyLoudness() {
-        val le = loudness ?: return
-        try {
-            if (boostPercent == 0) { le.enabled = false; return }
-            le.setTargetGain(boostPercent * 1000 / 200) // 0–1000 mB
-            le.enabled = true
-        } catch (e: Exception) {
-            Log.w(TAG, "LoudnessEnhancer apply failed: ${e.message}")
-        }
-    }
-
-    private fun applyBass() {
-        val bb = bass ?: return
-        try {
-            if (boostPercent == 0) { bb.enabled = false; return }
-            bb.setStrength((boostPercent * 1000 / 200).toShort()) // 0–1000
-            bb.enabled = true
-        } catch (e: Exception) {
-            Log.w(TAG, "BassBoost apply failed: ${e.message}")
-        }
-    }
-
-    private fun disableEffects() {
-        try { equalizer?.enabled = false } catch (_: Exception) {}
-        try { loudness?.enabled = false } catch (_: Exception) {}
-        try { bass?.enabled = false } catch (_: Exception) {}
-    }
-
-    private fun releaseEffects() {
-        try { equalizer?.release() } catch (_: Exception) {}
-        try { loudness?.release() } catch (_: Exception) {}
-        try { bass?.release() } catch (_: Exception) {}
-        equalizer = null
-        loudness = null
-        bass = null
-    }
-
-    // If an effect throws (OS released it), recreate everything and reapply
-    private fun recreateAndApply() {
-        Log.d(TAG, "Recreating effects after error")
-        createEffects()
-        if (isEnabled) applyEffects()
-    }
-
-    // -------------------------------------------------------------------------
-    // Reapply timer — keeps effects alive on devices that reset session 0
-    // -------------------------------------------------------------------------
-
-    private fun startReapplyTimer() {
-        stopReapplyTimer()
-        reapplyTimer = Timer("BoostReapply", true).also { t ->
-            t.scheduleAtFixedRate(object : TimerTask() {
-                override fun run() {
-                    if (isEnabled) {
-                        applyEffects()
-                        Log.d(TAG, "Effects reapplied by timer")
-                    }
-                }
-            }, REAPPLY_INTERVAL_MS, REAPPLY_INTERVAL_MS)
-        }
-    }
-
-    private fun stopReapplyTimer() {
-        reapplyTimer?.cancel()
-        reapplyTimer = null
-    }
+    private fun calcGainMb(percent: Int): Int =
+        (percent * MAX_GAIN_MB / 200)
 
     private fun setSystemVolumeMax() {
         try {
             val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0)
         } catch (e: Exception) {
-            Log.w(TAG, "Could not set max volume: ${e.message}")
+            Log.w(TAG, "setSystemVolumeMax: ${e.message}")
         }
     }
 }
