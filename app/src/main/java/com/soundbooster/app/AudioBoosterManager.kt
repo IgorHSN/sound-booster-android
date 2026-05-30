@@ -10,8 +10,8 @@ class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        // 3000 mB = 30 dB max
-        private const val MAX_GAIN_MB = 3000
+        // 6000 mB = 60 dB max
+        private const val MAX_GAIN_MB = 6000
     }
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
