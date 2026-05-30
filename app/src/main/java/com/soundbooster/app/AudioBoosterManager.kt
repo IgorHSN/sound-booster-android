@@ -9,8 +9,8 @@ class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        // Go well beyond the documented 1000 mB limit — Qualcomm HAL accepts up to ~3000 mB
-        private const val MAX_GAIN_MB = 3000
+        // Working apps (GOODEV, EZ Booster) use up to 8000 mB — built-in DRC prevents clipping
+        private const val MAX_GAIN_MB = 8000
     }
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -113,7 +113,7 @@ class AudioBoosterManager(private val context: Context) {
     }
 
     private fun calcGainMb(percent: Int): Int =
-        (percent * MAX_GAIN_MB / 200)
+        (percent * MAX_GAIN_MB / 100)
 
     private fun setSystemVolumeMax() {
         try {
