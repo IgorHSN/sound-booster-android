@@ -100,6 +100,8 @@ class AudioBoosterManager(private val context: Context) {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun handlePlaybackConfigChange(configs: List<AudioPlaybackConfiguration>) {
+        // audioSessionId is only available from API 31 (Android 12)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
         val activeIds = configs.map { it.audioSessionId }.toSet()
 
         // Remove effects for sessions that ended
