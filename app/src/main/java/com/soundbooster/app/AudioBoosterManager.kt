@@ -10,7 +10,8 @@ class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        private const val MAX_GAIN_MB = 8000
+        // 1500 mB = 15 dB: audible boost without DRC compression artifacts
+        private const val MAX_GAIN_MB = 1500
     }
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -46,7 +47,7 @@ class AudioBoosterManager(private val context: Context) {
     }
 
     fun setBoostLevel(percent: Int) {
-        boostPercent = percent.coerceIn(0, 200)
+        boostPercent = percent.coerceIn(0, 100)
         if (isEnabled) applyGain()
     }
 

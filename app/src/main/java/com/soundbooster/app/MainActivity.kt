@@ -102,9 +102,9 @@ class MainActivity : AppCompatActivity() {
     // -------------------------------------------------------------------------
 
     private fun setupUi() {
-        // SeekBar: 0–200 maps to 0–200% boost
-        binding.sbBoost.max = 200
-        binding.sbBoost.progress = 100 // default 100%
+        // SeekBar: 0–100 maps to 0–100% boost (0–1500 mB / 0–15 dB)
+        binding.sbBoost.max = 100
+        binding.sbBoost.progress = 50 // default 50%
 
         binding.sbBoost.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -128,9 +128,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateBoostLabels(percent: Int) {
         binding.tvBoostPercent.text = "$percent%"
-        // 100% slider = 8000 mB = 80 dB
-        val db = percent * 80.0f / 100f
-        binding.tvBoostDb.text = String.format("+%.0f dB", db)
+        // 100% slider = 1500 mB = 15 dB
+        val db = percent * 15.0f / 100f
+        binding.tvBoostDb.text = String.format("+%.1f dB", db)
     }
 
     private fun refreshVolumeDisplay() {
