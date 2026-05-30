@@ -4,12 +4,12 @@ import android.content.Context
 import android.media.AudioManager
 import android.media.audiofx.LoudnessEnhancer
 import android.util.Log
+import android.view.KeyEvent
 
 class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        // Working apps (GOODEV, EZ Booster) use up to 8000 mB — built-in DRC prevents clipping
         private const val MAX_GAIN_MB = 8000
     }
 
@@ -20,10 +20,6 @@ class AudioBoosterManager(private val context: Context) {
         private set
     private var boostPercent = 0
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
     fun init() {
         createEnhancer()
     }
@@ -32,16 +28,20 @@ class AudioBoosterManager(private val context: Context) {
         isEnabled = true
         setSystemVolumeMax()
         applyGain()
+        // Force the active media player to restart its audio session so it
+        // picks up the LoudnessEnhancer that is now active on session 0.
+        // Without this, the effect exists but the player ignores it because
+        // its audio session was already open before the effect was created.
+        dispatchRestartPlayback()
         Log.d(TAG, "Boost enabled at $boostPercent% (${calcGainMb(boostPercent)} mB)")
     }
 
     fun disable() {
         isEnabled = false
-        try {
-            loudnessEnhancer?.enabled = false
-        } catch (e: Exception) {
+        try { loudnessEnhancer?.enabled = false } catch (e: Exception) {
             Log.w(TAG, "disable: ${e.message}")
         }
+        dispatchRestartPlayback()
         Log.d(TAG, "Boost disabled")
     }
 
@@ -63,24 +63,15 @@ class AudioBoosterManager(private val context: Context) {
 
     fun release() {
         disable()
-        try {
-            loudnessEnhancer?.release()
-        } catch (e: Exception) {
+        try { loudnessEnhancer?.release() } catch (e: Exception) {
             Log.w(TAG, "release: ${e.message}")
         }
         loudnessEnhancer = null
     }
 
-    // -------------------------------------------------------------------------
-    // Internal
-    // -------------------------------------------------------------------------
-
     private fun createEnhancer() {
-        try {
-            loudnessEnhancer?.release()
-        } catch (_: Exception) {}
+        try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
-
         try {
             loudnessEnhancer = LoudnessEnhancer(0)
             Log.d(TAG, "LoudnessEnhancer created on session 0")
@@ -90,11 +81,7 @@ class AudioBoosterManager(private val context: Context) {
     }
 
     private fun applyGain() {
-        val le = loudnessEnhancer ?: run {
-            createEnhancer()
-            loudnessEnhancer
-        } ?: return
-
+        val le = loudnessEnhancer ?: run { createEnhancer(); loudnessEnhancer } ?: return
         try {
             val gainMb = calcGainMb(boostPercent)
             le.setTargetGain(gainMb)
@@ -107,13 +94,32 @@ class AudioBoosterManager(private val context: Context) {
                 loudnessEnhancer?.setTargetGain(calcGainMb(boostPercent))
                 loudnessEnhancer?.enabled = boostPercent > 0
             } catch (e2: Exception) {
-                Log.e(TAG, "applyGain retry failed: ${e2.message}")
+                Log.e(TAG, "applyGain retry: ${e2.message}")
             }
         }
     }
 
-    private fun calcGainMb(percent: Int): Int =
-        (percent * MAX_GAIN_MB / 100)
+    // Pause → Play → Pause → Play (twice) forces the active media player to
+    // drop and reopen its audio session, connecting to the session-0 effect chain.
+    private fun dispatchRestartPlayback() {
+        try {
+            val keys = listOf(
+                KeyEvent.KEYCODE_MEDIA_PAUSE,
+                KeyEvent.KEYCODE_MEDIA_PLAY,
+                KeyEvent.KEYCODE_MEDIA_PAUSE,
+                KeyEvent.KEYCODE_MEDIA_PLAY
+            )
+            for (keyCode in keys) {
+                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+            }
+            Log.d(TAG, "Restart playback dispatched")
+        } catch (e: Exception) {
+            Log.w(TAG, "dispatchRestartPlayback: ${e.message}")
+        }
+    }
+
+    private fun calcGainMb(percent: Int) = percent * MAX_GAIN_MB / 100
 
     private fun setSystemVolumeMax() {
         try {
