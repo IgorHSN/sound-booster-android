@@ -5,37 +5,8 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Dark purple gradient background -->
     <path
-        android:fillColor="#6750A4"
+        android:fillColor="#111111"
         android:pathData="M0,0h108v108h-108z" />
-
-    <!-- Speaker / sound wave icon centered on the adaptive icon canvas -->
-    <!-- Speaker body -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,38 L50,38 L62,28 L62,80 L50,70 L42,70 Z" />
-
-    <!-- Sound waves -->
-    <!-- Small wave -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M67,45 Q74,54 67,63" />
-
-    <!-- Medium wave -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M72,40 Q83,54 72,68" />
-
-    <!-- Large wave -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M77,35 Q92,54 77,73" />
 
 </vector>

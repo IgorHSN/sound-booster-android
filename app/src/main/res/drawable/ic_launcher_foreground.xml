@@ -5,30 +5,45 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Speaker body -->
-    <path
+    <!-- Equalizer bars: 5 vertical bars of increasing then decreasing height -->
+    <!-- Bar 1 -->
+    <rect
         android:fillColor="#FFFFFF"
-        android:pathData="M42,38 L50,38 L62,28 L62,80 L50,70 L42,70 Z" />
+        android:left="22"
+        android:top="62"
+        android:right="30"
+        android:bottom="78" />
 
-    <!-- Small wave -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M67,45 Q74,54 67,63" />
+    <!-- Bar 2 -->
+    <rect
+        android:fillColor="#FFFFFF"
+        android:left="34"
+        android:top="48"
+        android:right="42"
+        android:bottom="78" />
 
-    <!-- Medium wave -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M72,40 Q83,54 72,68" />
+    <!-- Bar 3 (tallest) -->
+    <rect
+        android:fillColor="#FFFFFF"
+        android:left="46"
+        android:top="30"
+        android:right="62"
+        android:bottom="78" />
 
-    <!-- Large wave -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M77,35 Q92,54 77,73" />
+    <!-- Bar 4 -->
+    <rect
+        android:fillColor="#FFFFFF"
+        android:left="66"
+        android:top="48"
+        android:right="74"
+        android:bottom="78" />
+
+    <!-- Bar 5 -->
+    <rect
+        android:fillColor="#FFFFFF"
+        android:left="78"
+        android:top="62"
+        android:right="86"
+        android:bottom="78" />
 
 </vector>

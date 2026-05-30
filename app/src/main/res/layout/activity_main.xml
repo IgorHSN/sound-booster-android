@@ -111,12 +111,17 @@
         android:id="@+id/btnToggle"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginBottom="48dp"
+        android:layout_marginBottom="72dp"
         android:text="ATIVAR"
         android:textSize="13sp"
         android:letterSpacing="0.2"
         android:textColor="@color/text_primary"
         android:backgroundTint="@color/background"
         style="@style/Widget.Material3.Button.OutlinedButton" />
+
+    <!-- Ad banner placeholder (60dp) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="60dp" />
 
 </LinearLayout>
