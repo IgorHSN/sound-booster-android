@@ -2,202 +2,148 @@ package com.soundbooster.app
 
 import android.content.Context
 import android.media.AudioManager
+import android.media.audiofx.BassBoost
+import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
-import android.media.AudioTrack
-import android.media.AudioFormat
-import android.media.AudioAttributes
-import android.os.Build
 import android.util.Log
 
-/**
- * AudioBoosterManager handles the core audio boost logic.
- *
- * It creates a silent AudioTrack to obtain an audio session ID, then attaches
- * a LoudnessEnhancer effect to that session. On Android, attaching a
- * LoudnessEnhancer to session 0 (the global mix) is attempted as a fallback
- * for broader system-wide boosting on supported devices.
- *
- * Boost range: 0 – 1000 millibels (0 – 10 dB).  The UI maps 0–200% to this
- * range so that 100% == 500 mB (5 dB) and 200% == 1000 mB (10 dB).
- */
 class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        /** Maximum gain the LoudnessEnhancer supports (1000 mB = 10 dB). */
-        const val MAX_GAIN_MB = 1000
+        // INT_MAX_VALUE priority ensures our effects take precedence over others
+        private const val EFFECT_PRIORITY = Int.MAX_VALUE
     }
 
-    private val audioManager: AudioManager =
-        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-    private var audioTrack: AudioTrack? = null
+    private var equalizer: Equalizer? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
-    private var globalLoudnessEnhancer: LoudnessEnhancer? = null
+    private var bassBoost: BassBoost? = null
 
-    /** The audio session ID used for effect attachment. */
-    var sessionId: Int = 0
+    var isEnabled = false
         private set
 
-    /** Whether the booster is currently active. */
-    var isEnabled: Boolean = false
-        private set
+    private var boostPercent = 0
 
-    /** Current boost level in millibels (0–1000). */
-    var currentGainMb: Int = 0
-        private set
-
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
-    /**
-     * Initialise the silent AudioTrack and attach effects.
-     * Must be called before [enable] or [setBoostLevel].
-     */
     fun init() {
+        releaseEffects()
         try {
-            audioTrack = createSilentAudioTrack()
-            sessionId = audioTrack?.audioSessionId ?: 0
-            Log.d(TAG, "AudioTrack session ID: $sessionId")
-
-            // Attach LoudnessEnhancer to our private session
-            if (sessionId != 0) {
-                loudnessEnhancer = LoudnessEnhancer(sessionId).also {
-                    it.enabled = false
-                }
-            }
-
-            // Attempt global session (session 0) – may be ignored by the OS
-            // but works on many devices for a system-wide boost effect.
-            try {
-                globalLoudnessEnhancer = LoudnessEnhancer(0).also {
-                    it.enabled = false
-                }
-                Log.d(TAG, "Global LoudnessEnhancer (session 0) created.")
-            } catch (e: Exception) {
-                Log.w(TAG, "Global LoudnessEnhancer not supported: ${e.message}")
-            }
-
+            // Session 0 = global audio mix. High priority = we override other effects.
+            equalizer = Equalizer(EFFECT_PRIORITY, 0)
+            Log.d(TAG, "Equalizer created. Bands: ${equalizer?.numberOfBands}, range: ${equalizer?.bandLevelRange?.toList()}")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialise AudioBoosterManager: ${e.message}", e)
+            Log.w(TAG, "Equalizer unavailable: ${e.message}")
+        }
+        try {
+            loudnessEnhancer = LoudnessEnhancer(0)
+            Log.d(TAG, "LoudnessEnhancer created.")
+        } catch (e: Exception) {
+            Log.w(TAG, "LoudnessEnhancer unavailable: ${e.message}")
+        }
+        try {
+            bassBoost = BassBoost(EFFECT_PRIORITY, 0)
+            Log.d(TAG, "BassBoost created. Strength supported: ${bassBoost?.strengthSupported}")
+        } catch (e: Exception) {
+            Log.w(TAG, "BassBoost unavailable: ${e.message}")
         }
     }
 
-    /**
-     * Enable the boost. Starts the silent track and activates effects.
-     */
     fun enable() {
-        try {
-            audioTrack?.play()
-            loudnessEnhancer?.enabled = true
-            globalLoudnessEnhancer?.enabled = true
-            isEnabled = true
-            applySystemVolumeMax()
-            Log.d(TAG, "Booster enabled at $currentGainMb mB")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to enable booster: ${e.message}", e)
-        }
+        isEnabled = true
+        setSystemVolumeMax()
+        applyEffects()
     }
 
-    /**
-     * Disable the boost and restore effects to inactive state.
-     */
     fun disable() {
-        try {
-            loudnessEnhancer?.enabled = false
-            globalLoudnessEnhancer?.enabled = false
-            audioTrack?.pause()
-            isEnabled = false
-            Log.d(TAG, "Booster disabled")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to disable booster: ${e.message}", e)
-        }
+        isEnabled = false
+        equalizer?.enabled = false
+        loudnessEnhancer?.enabled = false
+        bassBoost?.enabled = false
     }
 
-    /**
-     * Set the boost gain.
-     *
-     * @param percent Boost percentage from 0 to 200.
-     *   0%   = no boost (0 mB)
-     *   100% = 500 mB (5 dB)
-     *   200% = 1000 mB (10 dB)
-     */
     fun setBoostLevel(percent: Int) {
-        val clamped = percent.coerceIn(0, 200)
-        // Map 0–200% → 0–1000 mB
-        val gainMb = (clamped * MAX_GAIN_MB / 200)
-        currentGainMb = gainMb
-        try {
-            loudnessEnhancer?.setTargetGain(gainMb)
-            globalLoudnessEnhancer?.setTargetGain(gainMb)
-            Log.d(TAG, "Boost set to $clamped% ($gainMb mB)")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to set boost level: ${e.message}", e)
-        }
+        boostPercent = percent.coerceIn(0, 200)
+        if (isEnabled) applyEffects()
     }
 
-    /**
-     * Get current boost percentage (0–200).
-     */
-    fun getBoostPercent(): Int = (currentGainMb * 200 / MAX_GAIN_MB)
+    fun getBoostPercent() = boostPercent
 
-    /**
-     * Get the current media volume as a percentage of the stream maximum.
-     */
     fun getVolumePercent(): Int {
         val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         return if (max > 0) (current * 100 / max) else 0
     }
 
-    /**
-     * Get the raw current volume index for STREAM_MUSIC.
-     */
-    fun getCurrentVolume(): Int = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+    fun getCurrentVolume() = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+    fun getMaxVolume() = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
-    /**
-     * Get the maximum volume index for STREAM_MUSIC.
-     */
-    fun getMaxVolume(): Int = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-
-    /**
-     * Set the system media volume to a given index.
-     */
-    fun setSystemVolume(index: Int) {
-        val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val clamped = index.coerceIn(0, max)
-        audioManager.setStreamVolume(
-            AudioManager.STREAM_MUSIC,
-            clamped,
-            0 // no flags – avoids showing the system volume UI
-        )
-    }
-
-    /**
-     * Release all resources. Call when the service is destroyed.
-     */
     fun release() {
         disable()
+        releaseEffects()
+    }
+
+    private fun applyEffects() {
+        applyEqualizer()
+        applyLoudnessEnhancer()
+        applyBassBoost()
+    }
+
+    private fun applyEqualizer() {
+        val eq = equalizer ?: return
         try {
-            loudnessEnhancer?.release()
-            globalLoudnessEnhancer?.release()
-            audioTrack?.release()
+            if (boostPercent == 0) {
+                eq.enabled = false
+                return
+            }
+            val maxLevel = eq.bandLevelRange[1] // typically 1500 centibels = 15 dB
+            // Scale: at 100% use ~60% of max; at 200% use 100% of max
+            val targetLevel = (maxLevel * boostPercent / 200).toShort()
+            for (i in 0 until eq.numberOfBands) {
+                eq.setBandLevel(i.toShort(), targetLevel)
+            }
+            eq.enabled = true
+            Log.d(TAG, "EQ set to $targetLevel centibels on ${eq.numberOfBands} bands")
         } catch (e: Exception) {
-            Log.e(TAG, "Error during release: ${e.message}", e)
-        } finally {
-            loudnessEnhancer = null
-            globalLoudnessEnhancer = null
-            audioTrack = null
+            Log.w(TAG, "Equalizer apply failed: ${e.message}")
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
+    private fun applyLoudnessEnhancer() {
+        val le = loudnessEnhancer ?: return
+        try {
+            if (boostPercent == 0) {
+                le.enabled = false
+                return
+            }
+            // 0–200% maps to 0–1000 mB (0–10 dB)
+            val gainMb = boostPercent * 1000 / 200
+            le.setTargetGain(gainMb)
+            le.enabled = true
+            Log.d(TAG, "LoudnessEnhancer set to $gainMb mB")
+        } catch (e: Exception) {
+            Log.w(TAG, "LoudnessEnhancer apply failed: ${e.message}")
+        }
+    }
 
-    /** Push media stream to its hardware maximum so LoudnessEnhancer has room to work. */
-    private fun applySystemVolumeMax() {
+    private fun applyBassBoost() {
+        val bb = bassBoost ?: return
+        try {
+            if (boostPercent == 0) {
+                bb.enabled = false
+                return
+            }
+            // BassBoost strength: 0–1000
+            val strength = (boostPercent * 1000 / 200).toShort()
+            bb.setStrength(strength)
+            bb.enabled = true
+            Log.d(TAG, "BassBoost set to strength $strength")
+        } catch (e: Exception) {
+            Log.w(TAG, "BassBoost apply failed: ${e.message}")
+        }
+    }
+
+    private fun setSystemVolumeMax() {
         try {
             val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, max, 0)
@@ -206,46 +152,12 @@ class AudioBoosterManager(private val context: Context) {
         }
     }
 
-    /**
-     * Create a minimal silent AudioTrack.  It exists solely to obtain a
-     * unique audio session ID that we can attach effects to.
-     */
-    private fun createSilentAudioTrack(): AudioTrack {
-        val sampleRate = 44100
-        val bufferSize = AudioTrack.getMinBufferSize(
-            sampleRate,
-            AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT
-        ).coerceAtLeast(1024)
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setSampleRate(sampleRate)
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(bufferSize)
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                sampleRate,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufferSize,
-                AudioTrack.MODE_STREAM
-            )
-        }
+    private fun releaseEffects() {
+        try { equalizer?.release() } catch (_: Exception) {}
+        try { loudnessEnhancer?.release() } catch (_: Exception) {}
+        try { bassBoost?.release() } catch (_: Exception) {}
+        equalizer = null
+        loudnessEnhancer = null
+        bassBoost = null
     }
 }
