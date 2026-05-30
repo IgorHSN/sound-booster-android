@@ -10,8 +10,8 @@ class AudioBoosterManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioBoosterManager"
-        // 1500 mB = 15 dB: audible boost without DRC compression artifacts
-        private const val MAX_GAIN_MB = 1500
+        // 3000 mB = 30 dB max
+        private const val MAX_GAIN_MB = 3000
     }
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager

@@ -128,8 +128,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateBoostLabels(percent: Int) {
         binding.tvBoostPercent.text = "$percent%"
-        // 100% slider = 1500 mB = 15 dB
-        val db = percent * 15.0f / 100f
+        // 100% slider = 3000 mB = 30 dB
+        val db = percent * 30.0f / 100f
         binding.tvBoostDb.text = String.format("+%.1f dB", db)
     }
 
