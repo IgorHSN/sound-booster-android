@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SoundBooster"
+rootProject.name = "Loudify"
 include ':app'

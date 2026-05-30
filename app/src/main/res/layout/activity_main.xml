@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="56dp"
-        android:text="SOUND BOOSTER"
+        android:text="LOUDIFY"
         android:textSize="11sp"
         android:letterSpacing="0.3"
         android:textColor="@color/text_label"
