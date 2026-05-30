@@ -5,45 +5,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Equalizer bars: 5 vertical bars of increasing then decreasing height -->
-    <!-- Bar 1 -->
-    <rect
-        android:fillColor="#FFFFFF"
-        android:left="22"
-        android:top="62"
-        android:right="30"
-        android:bottom="78" />
+    <!-- 5 equalizer bars, white, rounded top, centered on 108x108 canvas -->
+    <!-- Bar 1 (shortest left) x=23 y=60 w=10 h=20 r=2 -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M25,60 L31,60 Q33,60 33,62 L33,80 L23,80 L23,62 Q23,60 25,60 Z"/>
 
-    <!-- Bar 2 -->
-    <rect
-        android:fillColor="#FFFFFF"
-        android:left="34"
-        android:top="48"
-        android:right="42"
-        android:bottom="78" />
+    <!-- Bar 2 x=36 y=45 w=10 h=35 r=2 -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M38,45 L44,45 Q46,45 46,47 L46,80 L36,80 L36,47 Q36,45 38,45 Z"/>
 
-    <!-- Bar 3 (tallest) -->
-    <rect
-        android:fillColor="#FFFFFF"
-        android:left="46"
-        android:top="30"
-        android:right="62"
-        android:bottom="78" />
+    <!-- Bar 3 (tallest center) x=49 y=26 w=10 h=54 r=2 -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M51,26 L57,26 Q59,26 59,28 L59,80 L49,80 L49,28 Q49,26 51,26 Z"/>
 
-    <!-- Bar 4 -->
-    <rect
-        android:fillColor="#FFFFFF"
-        android:left="66"
-        android:top="48"
-        android:right="74"
-        android:bottom="78" />
+    <!-- Bar 4 x=62 y=45 w=10 h=35 r=2 -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M64,45 L70,45 Q72,45 72,47 L72,80 L62,80 L62,47 Q62,45 64,45 Z"/>
 
-    <!-- Bar 5 -->
-    <rect
-        android:fillColor="#FFFFFF"
-        android:left="78"
-        android:top="62"
-        android:right="86"
-        android:bottom="78" />
+    <!-- Bar 5 (shortest right) x=75 y=60 w=10 h=20 r=2 -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M77,60 L83,60 Q85,60 85,62 L85,80 L75,80 L75,62 Q75,60 77,60 Z"/>
 
 </vector>
