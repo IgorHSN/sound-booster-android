@@ -1,90 +1,112 @@
-# Sound Booster for Android
+# Loudify — Sound Booster
 
-An Android application that boosts system audio volume beyond the default hardware maximum using Android's `LoudnessEnhancer` audio effect.
+> Amplify your audio beyond the system maximum. No root required.
+
+A minimalist Android volume booster that applies software gain on top of your device's hardware volume ceiling using Android's native `LoudnessEnhancer` API.
+
+---
 
 ## Features
 
-- Boost audio gain by up to +10 dB (1000 millibels) above the system maximum
-- Slider control: 0% to 200% (0 dB to +10 dB)
-- Live display of current system volume and boost percentage
-- Runs as a persistent foreground service
-- Material Design 3 dark theme UI
-- Notification with quick-toggle action
-- Supports Android 5.0 (API 21) and above
+- Boost audio from **0 to +60 dB** above the system maximum
+- Flat dark UI — clean, minimal, distraction-free
+- Runs as a persistent **foreground service** in the background
+- Real-time slider control with no audio interruptions
+- Watchdog that keeps the effect alive automatically
+- Compatible with **Android 5.0+ (API 21)**
 
-## Technical approach
+---
 
-### LoudnessEnhancer
+## How it works
 
-The app uses `android.media.audiofx.LoudnessEnhancer`, an Android framework class that applies a gain to a specific audio session. The key steps are:
+Loudify uses `android.media.audiofx.LoudnessEnhancer` on Android's global audio session (session 0), which processes all audio passing through the software mixer.
 
-1. A silent `AudioTrack` is created to obtain a unique `audioSessionId`.
-2. `LoudnessEnhancer(sessionId)` is attached to that session.
-3. An attempt is made to also attach `LoudnessEnhancer(0)` (the global mix session), which works on many devices to provide system-wide boosting.
-4. `setTargetGain(gainMb)` sets the boost in millibels. 1000 mB = 10 dB.
+**Activation flow:**
+1. `LoudnessEnhancer(0)` is created and attached to the global output mix
+2. `setTargetGain(gainMb)` applies the boost in millibels (0–6000 mB)
+3. `AudioManager` dispatches a single pause→play event to force the active media player to reconnect to the effect chain
+4. A watchdog timer checks every 3 seconds that the effect is still alive, recreating it silently if needed
 
-### System volume maximisation
+**Slider changes** call `setTargetGain()` directly — no interruption, real-time.
 
-When the boost is enabled, `AudioManager.setStreamVolume(STREAM_MUSIC, max, 0)` is called to push the media stream to its hardware ceiling before the software gain is applied on top.
-
-### Foreground Service
-
-`AudioBoosterService` runs as a foreground service with `foregroundServiceType="mediaPlayback"`, keeping the boost active when the app is in the background.
+---
 
 ## Project structure
 
 ```
-sound-booster/
-├── app/
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       ├── java/com/soundbooster/app/
-│       │   ├── MainActivity.kt          # UI controller
-│       │   ├── AudioBoosterService.kt   # Foreground service
-│       │   └── AudioBoosterManager.kt   # Core audio logic
-│       └── res/
-│           ├── layout/activity_main.xml
-│           ├── values/strings.xml
-│           ├── values/colors.xml
-│           ├── values/themes.xml
-│           └── drawable/
-├── build.gradle
-├── app/build.gradle
-├── settings.gradle
-└── gradle.properties
+loudify/
+├── app/src/main/
+│   ├── java/com/soundbooster/app/
+│   │   ├── MainActivity.kt          # UI — flat dark, slider, toggle
+│   │   ├── AudioBoosterService.kt   # Foreground service (START_STICKY)
+│   │   └── AudioBoosterManager.kt   # LoudnessEnhancer logic + watchdog
+│   ├── res/layout/activity_main.xml
+│   └── AndroidManifest.xml
+├── store-listing/
+│   ├── descriptions/                # pt-BR and en-US Play Store copy
+│   ├── graphics/                    # Icon 512×512 and Feature Graphic 1024×500
+│   └── privacy-policy/index.html   # Hostable privacy policy
+├── app/build.gradle                 # Release signing config
+└── gradle.properties                # Keystore placeholders
 ```
+
+---
+
+## Build
+
+**Debug (for testing):**
+```
+./gradlew assembleDebug
+```
+APK output: `app/build/outputs/apk/debug/app-debug.apk`
+
+**Release (for Play Store):**
+1. Generate a keystore: Android Studio → **Build → Generate Signed Bundle / APK**
+2. Fill in `gradle.properties`:
+```properties
+KEYSTORE_PATH=../loudify-keystore.jks
+KEYSTORE_PASSWORD=your_password
+KEY_ALIAS=loudify
+KEY_PASSWORD=your_password
+```
+3. Run:
+```
+./gradlew assembleRelease
+```
+
+---
 
 ## Requirements
 
-- Android Studio Hedgehog (2023.1.1) or newer
-- Android SDK 34
-- Kotlin 1.9.x
-- Gradle 8.4
-
-## Build instructions
-
-1. Open the project in Android Studio.
-2. Wait for Gradle sync to complete.
-3. Connect an Android device (API 21+) or start an emulator.
-4. Click **Run** or use `./gradlew assembleDebug`.
-
-## Permissions used
-
-| Permission | Purpose |
+| Tool | Version |
 |---|---|
-| `FOREGROUND_SERVICE` | Keep service alive in background |
-| `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Required for `foregroundServiceType="mediaPlayback"` on API 29+ |
-| `MODIFY_AUDIO_SETTINGS` | Set stream volume to maximum |
-| `RECORD_AUDIO` | Required on some devices for audio effect attachment |
-| `POST_NOTIFICATIONS` | Show foreground service notification on API 33+ |
+| Android Studio | Hedgehog 2023.1.1+ |
+| Android SDK | 34 |
+| Kotlin | 1.9.x |
+| Gradle | 8.4 |
+| Min Android | 5.0 (API 21) |
 
-## Limitations
+---
 
-- The `LoudnessEnhancer` on session 0 (global mix) may be ignored by some device manufacturers.
-- Gain beyond +10 dB is not achievable via the standard Android audio effects API without root.
-- Excessive boost may cause audio clipping/distortion depending on the source content and hardware.
-- Effects are applied to the Android software mix; hardware volume limits still apply at the DAC level.
+## Permissions
+
+| Permission | Why |
+|---|---|
+| `MODIFY_AUDIO_SETTINGS` | Apply volume boost and set stream to max |
+| `FOREGROUND_SERVICE` | Keep boost active in background |
+| `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Required for media foreground service on API 29+ |
+| `POST_NOTIFICATIONS` | Show persistent notification on Android 13+ |
+
+---
+
+## Notes
+
+- Works best with apps that use Android's software audio mixer (YouTube, browser media, local players)
+- A single brief pause/play is dispatched on activation so the active player picks up the effect
+- Tested on **Motorola Moto G84 5G** running Android 13
+
+---
 
 ## License
 
-MIT License. See source files for details.
+MIT
