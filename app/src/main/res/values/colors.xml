@@ -1,32 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand colors -->
-    <color name="accent">#6750A4</color>
-    <color name="accent_variant">#9A82DB</color>
-    <color name="on_accent">#FFFFFF</color>
+    <color name="background">#111111</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#444444</color>
+    <color name="text_label">#333333</color>
+    <color name="accent">#FFFFFF</color>
+    <color name="slider_track">#333333</color>
+    <color name="btn_border">#333333</color>
+    <color name="status_active">#FFFFFF</color>
+    <color name="status_inactive">#333333</color>
 
-    <!-- Backgrounds -->
-    <color name="background">#1C1B1F</color>
-    <color name="card_background">#2B2930</color>
-    <color name="surface">#2B2930</color>
-
-    <!-- Text -->
-    <color name="text_primary">#E6E1E5</color>
-    <color name="text_secondary">#CAC4D0</color>
-
-    <!-- Divider -->
-    <color name="divider">#49454F</color>
-
-    <!-- Status indicators -->
-    <color name="status_active">#4CAF50</color>
-    <color name="status_inactive">#78747E</color>
-
-    <!-- Toggle button colors -->
-    <color name="toggle_on">#6750A4</color>
-    <color name="toggle_off">#B3261E</color>
+    <!-- kept for compat -->
+    <color name="card_background">#111111</color>
+    <color name="surface">#111111</color>
+    <color name="divider">#222222</color>
+    <color name="toggle_on">#111111</color>
+    <color name="toggle_off">#111111</color>
     <color name="button_text">#FFFFFF</color>
-
-    <!-- Legacy / compat -->
+    <color name="on_accent">#000000</color>
+    <color name="accent_variant">#FFFFFF</color>
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>

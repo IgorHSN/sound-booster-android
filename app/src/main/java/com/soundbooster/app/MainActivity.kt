@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupUi() {
         // SeekBar: 0–100 maps to 0–100% boost (0–1500 mB / 0–15 dB)
         binding.sbBoost.max = 100
-        binding.sbBoost.progress = 50 // default 50%
+        binding.sbBoost.progress = 0
 
         binding.sbBoost.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -128,33 +128,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateBoostLabels(percent: Int) {
         binding.tvBoostPercent.text = "$percent%"
-        // 100% slider = 6000 mB = 60 dB
         val db = percent * 60.0f / 100f
-        binding.tvBoostDb.text = String.format("+%.1f dB", db)
+        binding.tvBoostDb.text = String.format("+%.0f", db)
     }
 
     private fun refreshVolumeDisplay() {
-        val service = boosterService ?: return
-        val manager = service.boosterManager
-        val current = manager.getCurrentVolume()
-        val max = manager.getMaxVolume()
-        binding.tvCurrentVolume.text = "Volume: $current / $max"
+        // no volume display in flat dark layout
     }
 
     private fun updateToggleButton(active: Boolean) {
         if (active) {
-            binding.btnToggle.text = "Stop Boost"
-            binding.btnToggle.setBackgroundColor(
-                ContextCompat.getColor(this, R.color.toggle_off)
-            )
-            binding.tvStatus.text = "Status: Active"
+            binding.btnToggle.text = "DESATIVAR"
+            binding.tvStatus.text = "● ativo"
             binding.tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_active))
         } else {
-            binding.btnToggle.text = "Start Boost"
-            binding.btnToggle.setBackgroundColor(
-                ContextCompat.getColor(this, R.color.toggle_on)
-            )
-            binding.tvStatus.text = "Status: Inactive"
+            binding.btnToggle.text = "ATIVAR"
+            binding.tvStatus.text = "● inativo"
             binding.tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_inactive))
         }
     }

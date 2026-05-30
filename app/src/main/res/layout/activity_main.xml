@@ -1,278 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
     android:background="@color/background"
-    tools:context=".MainActivity">
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp">
 
+    <!-- App label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="56dp"
+        android:text="SOUND BOOSTER"
+        android:textSize="11sp"
+        android:letterSpacing="0.3"
+        android:textColor="@color/text_label"
+        android:fontFamily="sans-serif-light" />
+
+    <!-- Big dB number -->
+    <TextView
+        android:id="@+id/tvBoostDb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="+0"
+        android:textSize="96sp"
+        android:textColor="@color/text_primary"
+        android:fontFamily="sans-serif-thin"
+        android:letterSpacing="-0.05"
+        android:lineSpacingExtra="0dp" />
+
+    <!-- "dB" unit -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="dB"
+        android:textSize="18sp"
+        android:letterSpacing="0.15"
+        android:textColor="@color/text_secondary"
+        android:fontFamily="sans-serif-light"
+        android:layout_marginTop="-8dp" />
+
+    <!-- Slider -->
+    <SeekBar
+        android:id="@+id/sbBoost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="@color/text_primary"
+        android:progressBackgroundTint="@color/slider_track"
+        android:thumbTint="@color/text_primary" />
+
+    <!-- Slider range labels -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
-
-        <!-- App title -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
 
         <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0 dB"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
+            android:id="@+id/tvBoostPercent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Amplify your audio beyond the system limit"
-            android:textSize="14sp"
+            android:text="0%"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="+60 dB"
+            android:textSize="11sp"
             android:textColor="@color/text_secondary"
-            android:layout_marginBottom="32dp" />
-
-        <!-- Status card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="@color/card_background"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="20dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Booster Status"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:id="@+id/tvStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Status: Inactive"
-                        android:textSize="14sp"
-                        android:textColor="@color/status_inactive"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/divider"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:id="@+id/tvCurrentVolume"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Volume: -- / --"
-                    android:textSize="15sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginBottom="4dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="4dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Boost Gain:"
-                        android:textSize="15sp"
-                        android:textColor="@color/text_secondary" />
-
-                    <TextView
-                        android:id="@+id/tvBoostPercent"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="100%"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/accent"
-                        android:layout_marginEnd="8dp" />
-
-                    <TextView
-                        android:id="@+id/tvBoostDb"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="+5.0 dB"
-                        android:textSize="15sp"
-                        android:textColor="@color/text_secondary" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Boost slider card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="@color/card_background"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="20dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Boost Level"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0%"
-                        android:textSize="13sp"
-                        android:textColor="@color/text_secondary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=" – 100%"
-                        android:textSize="13sp"
-                        android:textColor="@color/text_secondary" />
-
-                </LinearLayout>
-
-                <SeekBar
-                    android:id="@+id/sbBoost"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:max="100"
-                    android:progress="50"
-                    android:progressTint="@color/accent"
-                    android:thumbTint="@color/accent"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="No boost"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Max (+60 dB)"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary" />
-
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/divider"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="The LoudnessEnhancer applies up to +60 dB (6000 mB) of gain on top of the system volume maximum. Adjust carefully to avoid distortion at high levels."
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:lineSpacingExtra="2dp" />
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Toggle button -->
-        <Button
-            android:id="@+id/btnToggle"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Start Boost"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/button_text"
-            android:backgroundTint="@color/toggle_on"
-            android:layout_marginBottom="24dp"
-            style="@style/Widget.Material3.Button" />
-
-        <!-- Info card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="@color/card_background"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="32dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="How it works"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• Sets system media volume to maximum\n• Applies Android LoudnessEnhancer effect\n• Runs as a foreground service while active\n• Effect is applied to the global audio mix\n• Works with music, video, and other media"
-                    android:textSize="13sp"
-                    android:textColor="@color/text_secondary"
-                    android:lineSpacingExtra="4dp" />
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            android:gravity="end" />
 
     </LinearLayout>
-</ScrollView>
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Status -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="● inativo"
+        android:textSize="11sp"
+        android:letterSpacing="0.15"
+        android:textColor="@color/status_inactive" />
+
+    <!-- Toggle button -->
+    <Button
+        android:id="@+id/btnToggle"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="48dp"
+        android:text="ATIVAR"
+        android:textSize="13sp"
+        android:letterSpacing="0.2"
+        android:textColor="@color/text_primary"
+        android:backgroundTint="@color/background"
+        style="@style/Widget.Material3.Button.OutlinedButton" />
+
+</LinearLayout>
