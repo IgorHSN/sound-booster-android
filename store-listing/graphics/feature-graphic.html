@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #000; width: 1024px; height: 500px; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1024" height="500"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Background
+ctx.fillStyle = '#111111';
+ctx.fillRect(0, 0, 1024, 500);
+
+// Subtle grid lines
+ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+ctx.lineWidth = 1;
+for (let x = 0; x < 1024; x += 64) {
+  ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 500); ctx.stroke();
+}
+for (let y = 0; y < 500; y += 64) {
+  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+}
+
+// Left side — text
+// "LOUDIFY"
+ctx.fillStyle = '#FFFFFF';
+ctx.font = '300 86px "Segoe UI", system-ui, sans-serif';
+ctx.letterSpacing = '-2px';
+ctx.fillText('LOUDIFY', 72, 220);
+
+// Divider line
+ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(72, 238);
+ctx.lineTo(420, 238);
+ctx.stroke();
+
+// Subtitle
+ctx.fillStyle = '#444444';
+ctx.font = '300 22px "Segoe UI", system-ui, sans-serif';
+ctx.fillText('SOUND BOOSTER', 74, 272);
+
+// Tagline
+ctx.fillStyle = '#333333';
+ctx.font = '300 15px "Segoe UI", system-ui, sans-serif';
+ctx.fillText('Go beyond the maximum.', 74, 320);
+
+// Right side — equalizer bars
+ctx.fillStyle = '#FFFFFF';
+
+const bars = [
+  { x: 580, h: 100 },
+  { x: 640, h: 180 },
+  { x: 700, h: 280 },
+  { x: 760, h: 320 },
+  { x: 820, h: 280 },
+  { x: 880, h: 180 },
+  { x: 940, h: 100 },
+];
+
+const barW = 36;
+const baseY = 420;
+
+bars.forEach((bar, i) => {
+  const alpha = 0.15 + (i <= bars.length / 2 ? i : bars.length - 1 - i) / (bars.length / 2) * 0.85;
+  ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+
+  const x = bar.x - barW / 2;
+  const y = baseY - bar.h;
+  const r = 5;
+
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + barW - r, y);
+  ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+  ctx.lineTo(x + barW, baseY);
+  ctx.lineTo(x, baseY);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+});
+
+// Bottom label
+ctx.fillStyle = '#2a2a2a';
+ctx.font = '300 12px "Segoe UI", system-ui, sans-serif';
+ctx.fillText('loudify-sound-booster', 72, 470);
+</script>
+</body>
+</html>

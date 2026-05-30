@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; width: 512px; height: 512px; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Background
+ctx.fillStyle = '#111111';
+ctx.fillRect(0, 0, 512, 512);
+
+// Equalizer bars (white, centered)
+ctx.fillStyle = '#FFFFFF';
+
+const bars = [
+  { x: 172, h: 90  },
+  { x: 214, h: 155 },
+  { x: 256, h: 240 },
+  { x: 298, h: 155 },
+  { x: 340, h: 90  },
+];
+
+const barW = 30;
+const baseY = 360;
+
+bars.forEach(bar => {
+  // Rounded top rect
+  const x = bar.x - barW / 2;
+  const y = baseY - bar.h;
+  const r = 6;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + barW - r, y);
+  ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+  ctx.lineTo(x + barW, baseY);
+  ctx.lineTo(x, baseY);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+});
+</script>
+</body>
+</html>
